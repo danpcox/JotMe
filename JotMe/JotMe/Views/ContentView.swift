@@ -32,6 +32,15 @@ struct ContentView: View {
                     speechRecognizer.startTranscribing() // Start transcribing
                 } else {
                     speechRecognizer.stopTranscribing() // Stop transcribing
+                    let jotAPI = JotAPI(authManager: authManager)
+                    jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
+                        switch result {
+                        case .success:
+                            print("Jot successfully added to server.")
+                        case .failure(let error):
+                            print("Failed to add jot: \(error.localizedDescription)")
+                        }
+                    }
                 }
             }) {
                 Text(isRecording ? "Stop" : "Record")
@@ -51,7 +60,8 @@ struct ContentView: View {
         }
         .padding()
     }
-}
+ }
+
 
 #Preview {
     ContentView()
