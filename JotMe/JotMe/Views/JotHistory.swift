@@ -50,13 +50,11 @@ struct JotHistory: View {
                 case .success(let jots):
                     self.jots = jots
                 case .failure(let error):
+                    print("Failed to fetch jots: \(error.localizedDescription)") // Debug print
                     self.errorMessage = error.localizedDescription
                 }
             }
         }
     }
-}
 
-#Preview {
-    JotHistory().environmentObject(AuthManager())
 }

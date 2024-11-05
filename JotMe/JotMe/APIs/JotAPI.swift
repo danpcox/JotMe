@@ -57,7 +57,7 @@ class JotAPI: BaseAPI {
     func getJotHistory(completion: @escaping (Result<[JotDetails], Error>) -> Void) {
         let endpoint = "/jots/getUserJots.php" // API endpoint for retrieving jot history
 
-        guard let request = createRequest(endpoint: endpoint, method: "GET") else {
+        guard let request = createRequest(endpoint: endpoint, method: "POST") else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid request"])))
             return
         }
