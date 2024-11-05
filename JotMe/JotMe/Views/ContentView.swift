@@ -7,29 +7,12 @@
 
 import SwiftUI
 import AVFoundation
+import Speech
 
 struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var transcriptText: String = "" // Holds the transcribed text
-    private var dingSoundPlayer: AVAudioPlayer? // Audio player for the "ding" sound
-
-    init() {
-        // Load the "ding" sound from the app bundle
-        if let soundURL = Bundle.main.url(forResource: "ding", withExtension: "mp3") {
-            do {
-                dingSoundPlayer = try AVAudioPlayer(contentsOf: soundURL)
-            } catch {
-                print("Error creating AVAudioPlayer: \(error)")
-            }
-        } else {
-            print("Error loading sound file")
-        }
-    }
-
-    // Function to play the "ding" sound
-    private func playDingSound() {
-        dingSoundPlayer?.play()
-    }
+    @StateObject private var speechRecognizer = SpeechRecognizer() // Speech recognizer instance
+    @State private var isRecording = false // Track recording state
 
     var body: some View {
         VStack(spacing: 20) {
@@ -42,23 +25,27 @@ struct ContentView: View {
                     .padding()
             }
 
-            // Big Red Button
+            // Toggle Recording Button
             Button(action: {
-                playDingSound() // Play the "ding" sound
-                print("Button tapped") // Placeholder for recording action
+                isRecording.toggle() // Toggle recording state
+                if isRecording {
+                    speechRecognizer.startTranscribing() // Start transcribing
+                } else {
+                    speechRecognizer.stopTranscribing() // Stop transcribing
+                }
             }) {
-                Text("Record")
+                Text(isRecording ? "Stop" : "Record")
                     .font(.largeTitle)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.red)
+                    .background(isRecording ? Color.green : Color.red) // Green while recording, red otherwise
                     .cornerRadius(10)
             }
             .padding()
 
             // Display Transcribed Text
-            Text(transcriptText)
+            Text(speechRecognizer.transcriptText)
                 .foregroundColor(.blue)
                 .padding()
         }
