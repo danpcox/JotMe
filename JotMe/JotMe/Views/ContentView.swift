@@ -11,12 +11,13 @@ import Speech
 
 struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
-    @StateObject private var speechRecognizer = SpeechRecognizer() // Speech recognizer instance
-    @State private var isRecording = false // Track recording state
+    @StateObject private var speechRecognizer = SpeechRecognizer()
+    @State private var isRecording = false
+    @State private var jotMessage: String? // Holds success message from API response
+    @State private var jotDetails: JotDetails? // Holds jot details from API response
 
     var body: some View {
         VStack(spacing: 20) {
-            // Display the startup message if available
             if authManager.isStartupLoading {
                 ProgressView("Checking startup...")
             } else if let message = authManager.startupMessage {
@@ -25,20 +26,20 @@ struct ContentView: View {
                     .padding()
             }
 
-            // Toggle Recording Button
             Button(action: {
-                isRecording.toggle() // Toggle recording state
+                isRecording.toggle()
                 if isRecording {
-                    speechRecognizer.startTranscribing() // Start transcribing
+                    speechRecognizer.startTranscribing()
                 } else {
-                    speechRecognizer.stopTranscribing() // Stop transcribing
+                    speechRecognizer.stopTranscribing()
                     let jotAPI = JotAPI(authManager: authManager)
                     jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
                         switch result {
-                        case .success:
-                            print("Jot successfully added to server.")
+                        case .success(let response):
+                            jotMessage = response.message
+                            jotDetails = response.jot
                         case .failure(let error):
-                            print("Failed to add jot: \(error.localizedDescription)")
+                            jotMessage = "Failed to add jot: \(error.localizedDescription)"
                         }
                     }
                 }
@@ -48,7 +49,7 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(isRecording ? Color.green : Color.red) // Green while recording, red otherwise
+                    .background(isRecording ? Color.green : Color.red)
                     .cornerRadius(10)
             }
             .padding()
@@ -57,12 +58,22 @@ struct ContentView: View {
             Text(speechRecognizer.transcriptText)
                 .foregroundColor(.blue)
                 .padding()
+
+            // Display API Response Message
+            if let message = jotMessage {
+                Text(message)
+                    .foregroundColor(.green)
+                    .padding()
+            }
+
+            // Display Jot Details if Available
+            if let details = jotDetails {
+                Text("Jot ID: \(details.id)")
+                Text("Created At: \(details.created_at)")
+                Text("Jot Text: \(details.jot_text)")
+                    .padding()
+            }
         }
         .padding()
     }
- }
-
-
-#Preview {
-    ContentView()
 }
