@@ -13,7 +13,7 @@ struct JotMeApp: App {
     var body: some Scene {
         WindowGroup {
             if authManager.isAuthenticated {
-                ContentView().environmentObject(authManager)
+                ContentView(authManager: authManager).environmentObject(authManager)
             } else {
                 LoginView().environmentObject(authManager)
             }

@@ -12,9 +12,14 @@ struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
-    @State private var showToast = false // Controls the toast visibility
-    @State private var showHistory = false // Controls the Jot History screen
-    @State private var jotUploaded = false // Tracks successful upload for checkmark
+    @State private var showToast = false
+    @State private var showHistory = false
+    @State private var jotUploaded = false
+    @StateObject private var jotHistoryViewModel: JotHistoryViewModel // ViewModel for JotHistory
+
+    init(authManager: AuthManager) {
+        _jotHistoryViewModel = StateObject(wrappedValue: JotHistoryViewModel(authManager: authManager))
+    }
 
     var body: some View {
         NavigationView {
@@ -28,18 +33,17 @@ struct ContentView: View {
                 }
 
                 // Navigation link to open Jot History as a new screen
-                NavigationLink(destination: JotHistory().environmentObject(authManager), isActive: $showHistory) {
+                NavigationLink(destination: JotHistory(viewModel: jotHistoryViewModel), isActive: $showHistory) {
                     Button("Jot History") {
                         showHistory = true
                     }
                     .padding()
                 }
 
-                // Toggle Recording Button
                 Button(action: {
                     isRecording.toggle()
                     if isRecording {
-                        jotUploaded = false // Reset checkmark on new recording
+                        jotUploaded = false
                         speechRecognizer.startTranscribing()
                     } else {
                         speechRecognizer.stopTranscribing()
@@ -47,8 +51,8 @@ struct ContentView: View {
                         jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
                             switch result {
                             case .success:
-                                showToast = true // Show toast on success
-                                jotUploaded = true // Show checkmark on successful upload
+                                showToast = true
+                                jotUploaded = true
                             case .failure(let error):
                                 print("Failed to add jot: \(error.localizedDescription)")
                             }
@@ -77,7 +81,7 @@ struct ContentView: View {
             }
             .padding()
             .toast(isShowing: $showToast, message: "Jot successfully uploaded!")
-            .navigationTitle("JotMe") // Adds a title to the navigation view
+            .navigationTitle("JotMe")
         }
     }
 }
