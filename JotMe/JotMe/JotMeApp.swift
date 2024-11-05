@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct JotMeApp: App {
+    @StateObject private var authManager = AuthManager()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if authManager.isAuthenticated {
+                ContentView().environmentObject(authManager)
+            } else {
+                LoginView().environmentObject(authManager)
+            }
         }
     }
 }
