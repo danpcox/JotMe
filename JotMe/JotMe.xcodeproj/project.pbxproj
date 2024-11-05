@@ -44,9 +44,22 @@
 		C2E4D2567EAF5B5B63447242 /* Pods_JotMe.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_JotMe.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		49EB805D2CDA94C4001AB2D3 /* Exceptions for "JotMe" folder in "JotMe" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 496190F02CDA8C4200281080 /* JotMe */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		496190F32CDA8C4200281080 /* JotMe */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				49EB805D2CDA94C4001AB2D3 /* Exceptions for "JotMe" folder in "JotMe" target */,
+			);
 			path = JotMe;
 			sourceTree = "<group>";
 		};
@@ -528,6 +541,7 @@
 				DEVELOPMENT_TEAM = 28BT7C55L2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JotMe/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -559,6 +573,7 @@
 				DEVELOPMENT_TEAM = 28BT7C55L2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JotMe/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

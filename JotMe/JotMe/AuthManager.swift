@@ -37,7 +37,6 @@ class AuthManager: ObservableObject {
                     self.isAuthenticated = false
                     self.isStartupLoading = false
                 } else if let user = user {
-                    self.isAuthenticated = true
                     self.userName = user.profile?.name ?? "User"
                     self.userEmail = user.profile?.email ?? ""
                     
@@ -45,7 +44,7 @@ class AuthManager: ObservableObject {
                     self.googleAccessToken = user.accessToken.tokenString
                     UserDefaults.standard.set(self.googleAccessToken, forKey: "googleAccessToken")
 
-                    print("Refreshed Google Access Token: \(self.googleAccessToken ?? "")")
+                    //print("Refreshed Google Access Token: \(self.googleAccessToken ?? "")")
                     
                     // Only register the user if userId doesn't exist
                     if self.userId == nil {
@@ -53,6 +52,7 @@ class AuthManager: ObservableObject {
                         self.registerUserWithBackend()
                     } else {
                         // If already registered, proceed with other startup tasks
+                        self.isAuthenticated = true
                         self.checkStartup()
                     }
                 }

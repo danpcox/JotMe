@@ -21,8 +21,13 @@ class UserAPI: BaseAPI {
 
         sendRequest(request) { result in
             switch result {
+                
             case .success(let data):
-                // Parse the response to extract the userId
+                if let rawResponse = String(data: data, encoding: .utf8) {
+                    print("Raw API Response: \(rawResponse)")
+                } else {
+                    print("Unable to convert data to string.")
+                }                // Parse the response to extract the userId
                 if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let userId = json["userId"] as? Int {
                     print("User registered with userId: \(userId)")
