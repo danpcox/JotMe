@@ -13,7 +13,6 @@ struct ContentView: View {
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
     @State private var showToast = false
-    @State private var showHistory = false
     @State private var jotUploaded = false
     @StateObject private var jotHistoryViewModel: JotHistoryViewModel
 
@@ -22,7 +21,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 if authManager.isStartupLoading {
                     ProgressView("Checking startup...")
@@ -33,13 +32,15 @@ struct ContentView: View {
                 }
 
                 // Navigation link to open Jot History as a new screen
-                NavigationLink(destination: JotHistory(viewModel: jotHistoryViewModel), isActive: $showHistory) {
-                    Button("Jot History") {
-                        showHistory = true
-                    }
+                NavigationLink("Jot History", value: "jotHistory")
                     .padding()
-                }
+                    .foregroundColor(.blue)
 
+                // Navigation link to open Reminders as a new screen
+                NavigationLink("Reminders", value: "reminders")
+                    .padding()
+                    .foregroundColor(.blue)
+                
                 // Main recording/re-recording button
                 Button(action: {
                     isRecording.toggle()
@@ -101,6 +102,13 @@ struct ContentView: View {
             .padding()
             .toast(isShowing: $showToast, message: "Jot successfully uploaded!")
             .navigationTitle("JotMe")
+            .navigationDestination(for: String.self) { value in
+                if value == "jotHistory" {
+                    JotHistory(viewModel: jotHistoryViewModel)
+                } else if value == "reminders" {
+                    RemindersView(viewModel: jotHistoryViewModel)
+                }
+            }
         }
     }
 }

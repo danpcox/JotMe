@@ -7,24 +7,6 @@
 
 import Foundation
 
-struct JotResponse: Codable {
-    let success: Bool
-    let message: String
-    let jot: JotDetails
-}
-
-struct JotDetails: Codable, Identifiable {
-    let id: Int
-    let jot_text: String
-    let created_at: String
-}
-
-struct JotHistoryResponse: Codable {
-    let success: Bool
-    let message: String
-    let jots: [JotDetails] // Array of JotDetails
-}
-
 class JotAPI: BaseAPI {
     init(authManager: AuthManager) {
         super.init(baseURL: "https://www.e-overhaul.com/jotme", authManager: authManager)
@@ -54,7 +36,7 @@ class JotAPI: BaseAPI {
             }
         }
     }
-    func getJotHistory(completion: @escaping (Result<[JotDetails], Error>) -> Void) {
+    func getJotHistory(completion: @escaping (Result<JotHistoryResponse, Error>) -> Void) {
         let endpoint = "/jots/getUserJots.php" // API endpoint for retrieving jot history
 
         guard let request = createRequest(endpoint: endpoint, method: "POST") else {
@@ -65,15 +47,23 @@ class JotAPI: BaseAPI {
         sendRequest(request) { result in
             switch result {
             case .success(let data):
+                // Print the raw JSON response for debugging
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Raw JSON response: \(jsonString)")
+                }
                 do {
                     let decodedResponse = try JSONDecoder().decode(JotHistoryResponse.self, from: data)
-                    completion(.success(decodedResponse.jots))
+                    completion(.success(decodedResponse))
                 } catch {
+                    print("Decoding Error: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             case .failure(let error):
+                print("Request Error: \(error.localizedDescription)")
                 completion(.failure(error))
             }
         }
     }
+
+
 }
