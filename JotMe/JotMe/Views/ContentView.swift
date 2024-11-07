@@ -15,7 +15,7 @@ struct ContentView: View {
     @State private var showToast = false
     @State private var showHistory = false
     @State private var jotUploaded = false
-    @StateObject private var jotHistoryViewModel: JotHistoryViewModel // ViewModel for JotHistory
+    @StateObject private var jotHistoryViewModel: JotHistoryViewModel
 
     init(authManager: AuthManager) {
         _jotHistoryViewModel = StateObject(wrappedValue: JotHistoryViewModel(authManager: authManager))
@@ -40,26 +40,18 @@ struct ContentView: View {
                     .padding()
                 }
 
+                // Main recording/re-recording button
                 Button(action: {
                     isRecording.toggle()
                     if isRecording {
                         jotUploaded = false
+                        speechRecognizer.transcriptText = "" // Clear existing text for re-recording
                         speechRecognizer.startTranscribing()
                     } else {
                         speechRecognizer.stopTranscribing()
-                        let jotAPI = JotAPI(authManager: authManager)
-                        jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
-                            switch result {
-                            case .success:
-                                showToast = true
-                                jotUploaded = true
-                            case .failure(let error):
-                                print("Failed to add jot: \(error.localizedDescription)")
-                            }
-                        }
                     }
                 }) {
-                    Text(isRecording ? "Stop" : "Record")
+                    Text(isRecording ? "Stop" : (speechRecognizer.transcriptText.isEmpty ? "Record" : "Re-record"))
                         .font(.largeTitle)
                         .foregroundColor(.white)
                         .padding()
@@ -69,14 +61,41 @@ struct ContentView: View {
                 }
                 .padding()
 
+                // Editable text field for live transcribed text and send button
                 HStack {
-                    Text(speechRecognizer.transcriptText)
-                        .foregroundColor(.blue)
-                        .padding()
-                    if jotUploaded {
+                    TextField("Transcribed text will appear here", text: $speechRecognizer.transcriptText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal)
+                    
+                    Button(action: {
+                        let jotAPI = JotAPI(authManager: authManager)
+                        jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
+                            switch result {
+                            case .success:
+                                showToast = true
+                                jotUploaded = true
+                                isRecording = false // Reset to "Record" after sending
+                                speechRecognizer.transcriptText = "" // Clear the text field
+                            case .failure(let error):
+                                print("Failed to add jot: \(error.localizedDescription)")
+                            }
+                        }
+                    }) {
+                        Image(systemName: "paperplane.fill")
+                            .foregroundColor(.blue)
+                            .padding()
+                    }
+                }
+                
+                // Display checkmark if jot is successfully uploaded
+                if jotUploaded {
+                    HStack {
+                        Text("Jot successfully uploaded")
+                            .foregroundColor(.green)
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
                     }
+                    .padding(.top)
                 }
             }
             .padding()
