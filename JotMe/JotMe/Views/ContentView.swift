@@ -12,8 +12,9 @@ struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
-    @State private var showToast = false
-    @State private var jotUploaded = false
+    @State private var jotUploaded = false // Track jot upload success
+    @State private var transcribedText: String = "" // Store text locally for visibility
+    @State private var isSending = false // Track send status
     @StateObject private var jotHistoryViewModel: JotHistoryViewModel
 
     init(authManager: AuthManager) {
@@ -31,28 +32,19 @@ struct ContentView: View {
                         .padding()
                 }
 
-                // Navigation link to open Jot History as a new screen
+                // Navigation links to Jot History and Reminders
                 NavigationLink("Jot History", value: "jotHistory")
                     .padding()
                     .foregroundColor(.blue)
-
-                // Navigation link to open Reminders as a new screen
                 NavigationLink("Reminders", value: "reminders")
                     .padding()
                     .foregroundColor(.blue)
                 
-                // Main recording/re-recording button
+                // Recording button
                 Button(action: {
-                    isRecording.toggle()
-                    if isRecording {
-                        jotUploaded = false
-                        speechRecognizer.transcriptText = "" // Clear existing text for re-recording
-                        speechRecognizer.startTranscribing()
-                    } else {
-                        speechRecognizer.stopTranscribing()
-                    }
+                    toggleRecording() // Toggle recording state
                 }) {
-                    Text(isRecording ? "Stop" : (speechRecognizer.transcriptText.isEmpty ? "Record" : "Re-record"))
+                    Text(isRecording ? "Stop" : (transcribedText.isEmpty ? "Record" : "Re-record"))
                         .font(.largeTitle)
                         .foregroundColor(.white)
                         .padding()
@@ -62,33 +54,59 @@ struct ContentView: View {
                 }
                 .padding()
 
-                // Editable text field for live transcribed text and send button
+                // Editable text field with send button and progress view
                 HStack {
-                    TextField("Transcribed text will appear here", text: $speechRecognizer.transcriptText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
+                    TextEditor(text: $transcribedText)
+                        .frame(minHeight: 50, maxHeight: 150) // Expands to fit text
+                        .padding(8)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                        .onChange(of: speechRecognizer.transcriptText) { newValue in
+                            if isRecording {
+                                transcribedText = newValue // Update live transcription
+                            }
+                        }
+                        .disabled(isSending) // Disable TextEditor while sending
+                        .onTapGesture {
+                            stopRecordingIfActive() // Stop recording if user taps the text editor
+                        }
+
                     Button(action: {
+                        stopRecordingIfActive() // Stop recording if user taps send
+                        hideKeyboard()
+                        isSending = true // Start sending
                         let jotAPI = JotAPI(authManager: authManager)
-                        jotAPI.addJot(transcribedText: speechRecognizer.transcriptText) { result in
-                            switch result {
-                            case .success:
-                                showToast = true
-                                jotUploaded = true
-                                isRecording = false // Reset to "Record" after sending
-                                speechRecognizer.transcriptText = "" // Clear the text field
-                            case .failure(let error):
-                                print("Failed to add jot: \(error.localizedDescription)")
+                        jotAPI.addJot(transcribedText: transcribedText) { result in
+                            DispatchQueue.main.async {
+                                isSending = false // Stop sending
+                                switch result {
+                                case .success:
+                                    jotUploaded = true
+                                    isRecording = false // Reset to "Record"
+                                    transcribedText = "" // Clear after sending
+                                case .failure(let error):
+                                    print("Failed to add jot: \(error.localizedDescription)")
+                                }
                             }
                         }
                     }) {
-                        Image(systemName: "paperplane.fill")
-                            .foregroundColor(.blue)
-                            .padding()
+                        if isSending {
+                            ProgressView() // Spinner while sending
+                                .padding()
+                        } else {
+                            Image(systemName: "paperplane.fill")
+                                .foregroundColor(.blue)
+                                .padding()
+                        }
                     }
+                    .disabled(isSending || transcribedText.isEmpty) // Disable while sending or if text is empty
                 }
                 
-                // Display checkmark if jot is successfully uploaded
+                // Success message with checkmark
                 if jotUploaded {
                     HStack {
                         Text("Jot successfully uploaded")
@@ -100,7 +118,6 @@ struct ContentView: View {
                 }
             }
             .padding()
-            .toast(isShowing: $showToast, message: "Jot successfully uploaded!")
             .navigationTitle("JotMe")
             .navigationDestination(for: String.self) { value in
                 if value == "jotHistory" {
@@ -110,5 +127,30 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    // Toggle recording state
+    private func toggleRecording() {
+        isRecording.toggle()
+        jotUploaded = false // Clear success message on (re-)record
+        if isRecording {
+            transcribedText = "" // Clear for re-recording
+            speechRecognizer.startTranscribing()
+        } else {
+            stopRecordingIfActive() // Stop recording if toggled off
+        }
+    }
+
+    // Stop recording if active
+    private func stopRecordingIfActive() {
+        if isRecording {
+            speechRecognizer.stopTranscribing()
+            isRecording = false
+        }
+    }
+
+    // Function to hide the keyboard
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

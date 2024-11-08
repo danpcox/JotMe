@@ -14,7 +14,7 @@ class SpeechRecognizer: ObservableObject {
     private var recognitionTask: SFSpeechRecognitionTask?
     private let recognizer = SFSpeechRecognizer()
     
-    @Published var transcriptText: String = "" // Live transcription text
+    @Published var transcriptText: String = "" // Real-time transcription text
 
     func startTranscribing() {
         audioEngine = AVAudioEngine()
@@ -35,11 +35,11 @@ class SpeechRecognizer: ObservableObject {
         
         recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
             if let result = result {
-                // Update the transcript text in real time
+                // Continuously update transcriptText in real-time
                 self?.transcriptText = result.bestTranscription.formattedString
             }
             if error != nil || result?.isFinal == true {
-                self?.stopTranscribing()
+                self?.stopTranscribing() // End transcription when complete or error occurs
             }
         }
     }

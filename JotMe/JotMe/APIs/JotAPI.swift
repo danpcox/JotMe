@@ -48,9 +48,11 @@ class JotAPI: BaseAPI {
             switch result {
             case .success(let data):
                 // Print the raw JSON response for debugging
+/*
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("Raw JSON response: \(jsonString)")
                 }
+ */
                 do {
                     let decodedResponse = try JSONDecoder().decode(JotHistoryResponse.self, from: data)
                     completion(.success(decodedResponse))
