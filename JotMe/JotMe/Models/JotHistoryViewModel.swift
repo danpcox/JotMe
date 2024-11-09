@@ -29,6 +29,7 @@ class JotHistoryViewModel: ObservableObject {
 
     // Manual refresh for pull-to-refresh action
     func refreshJotHistory() {
+        isFirstLoad = false // Ensure we fetch fresh data
         fetchJotHistory()
     }
 

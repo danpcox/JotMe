@@ -62,9 +62,9 @@ struct RemindersView: View {
             }
         }
         .refreshable {
-            if !refreshing && viewModel.todos.isEmpty {
+            if !refreshing {
                 refreshing = true
-                viewModel.refreshJotHistory() // Refresh the data
+                viewModel.refreshJotHistory() // Always refresh the data
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     refreshing = false // Reset refreshing after completion
                 }
