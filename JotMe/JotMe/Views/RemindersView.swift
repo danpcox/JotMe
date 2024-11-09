@@ -64,7 +64,7 @@ struct RemindersView: View {
         .refreshable {
             if !refreshing {
                 refreshing = true
-                viewModel.refreshJotHistory() // Always refresh the data
+                viewModel.refreshJotHistory() // Refresh the data
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     refreshing = false // Reset refreshing after completion
                 }
@@ -76,14 +76,32 @@ struct RemindersView: View {
             // Fetch data only if it's the first load
             viewModel.fetchJotHistoryIfNeeded()
         }
-        .toast(isShowing: $showCompletionToast, message: "Completed Reminder")
+        .toast(isShowing: $showCompletionToast, message: "Reminder marked as completed!")
     }
     
     // Mark a reminder as completed, show toast, and remove from the local list
     private func markAsCompleted(_ todo: Todo) {
-        if let index = viewModel.todos.firstIndex(where: { $0.id == todo.id }) {
-            viewModel.todos.remove(at: index) // Remove from list
-            showCompletionToast = true // Show completion toast
+        DispatchQueue.main.async { // Ensure all updates happen on the main thread
+            if let index = viewModel.todos.firstIndex(where: { $0.id == todo.id }) {
+                viewModel.todos.remove(at: index) // Remove from list
+                showCompletionToast = true // Show completion toast
+                
+                // Hide the toast after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    showCompletionToast = false
+                }
+            }
+        }
+        
+        // Call the API to mark the reminder as completed
+        let jotAPI = JotAPI(authManager: viewModel.authManager)
+        jotAPI.completeTodo(todoId: todo.id) { result in
+            switch result {
+            case .success:
+                print("Todo marked as completed on the server.")
+            case .failure(let error):
+                print("Failed to mark todo as completed: \(error.localizedDescription)")
+            }
         }
     }
 }

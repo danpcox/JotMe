@@ -66,6 +66,26 @@ class JotAPI: BaseAPI {
             }
         }
     }
+    // New function to mark a Todo as completed
+    func completeTodo(todoId: Int, completion: @escaping (Result<Void, Error>) -> Void) {
+        let endpoint = "/jots/completeTodo.php"
+        let body: [String: Any] = ["todoId": todoId]
+
+        guard let request = createRequest(endpoint: endpoint, method: "POST", body: body) else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid request"])))
+            return
+        }
+
+        sendRequest(request) { result in
+            switch result {
+            case .success:
+                completion(.success(()))
+            case .failure(let error):
+                print("Request Error in completeTodo: \(error.localizedDescription)")
+                completion(.failure(error))
+            }
+        }
+    }
 
 
 }

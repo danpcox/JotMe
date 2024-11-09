@@ -15,7 +15,7 @@ class JotHistoryViewModel: ObservableObject {
     @Published var errorMessage: String? // Display error messages if fetching fails
     private var isFirstLoad = true // Track if this is the first load
 
-    private let authManager: AuthManager
+    let authManager: AuthManager // Set to internal to make accessible to other views
 
     init(authManager: AuthManager) {
         self.authManager = authManager
@@ -29,7 +29,6 @@ class JotHistoryViewModel: ObservableObject {
 
     // Manual refresh for pull-to-refresh action
     func refreshJotHistory() {
-        isFirstLoad = false // Ensure we fetch fresh data
         fetchJotHistory()
     }
 
@@ -37,8 +36,9 @@ class JotHistoryViewModel: ObservableObject {
     private func fetchJotHistory() {
         loading = true
         let jotAPI = JotAPI(authManager: authManager)
+        
         jotAPI.getJotHistory { [weak self] result in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { // Ensure all updates happen on the main thread
                 self?.loading = false
                 self?.isFirstLoad = false
                 switch result {
