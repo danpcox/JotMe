@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var jotUploaded = false // Track jot upload success
     @State private var transcribedText: String = "" // Store text locally for visibility
     @State private var isSending = false // Track send status
+    @FocusState private var isTextEditorFocused: Bool // Track focus on TextEditor
     @StateObject private var jotHistoryViewModel: JotHistoryViewModel
 
     init(authManager: AuthManager) {
@@ -42,6 +43,7 @@ struct ContentView: View {
                 
                 // Recording button
                 Button(action: {
+                    hideKeyboard() // Hide keyboard when recording starts
                     toggleRecording() // Toggle recording state
                 }) {
                     Text(isRecording ? "Stop" : (transcribedText.isEmpty ? "Record" : "Re-record"))
@@ -70,12 +72,15 @@ struct ContentView: View {
                                 transcribedText = newValue // Update live transcription
                             }
                         }
+                        .focused($isTextEditorFocused) // Track focus state
                         .disabled(isSending) // Disable TextEditor while sending
                         .onTapGesture {
+                            clearSuccessMessage() // Clear success on text editor tap
                             stopRecordingIfActive() // Stop recording if user taps the text editor
                         }
 
                     Button(action: {
+                        clearSuccessMessage() // Clear success on send
                         stopRecordingIfActive() // Stop recording if user taps send
                         hideKeyboard()
                         isSending = true // Start sending
@@ -126,13 +131,16 @@ struct ContentView: View {
                     RemindersView(viewModel: jotHistoryViewModel)
                 }
             }
+            .onTapGesture {
+                hideKeyboard() // Hide keyboard on tap outside TextEditor
+            }
         }
     }
 
     // Toggle recording state
     private func toggleRecording() {
         isRecording.toggle()
-        jotUploaded = false // Clear success message on (re-)record
+        clearSuccessMessage() // Clear success on (re-)record
         if isRecording {
             transcribedText = "" // Clear for re-recording
             speechRecognizer.startTranscribing()
@@ -151,6 +159,11 @@ struct ContentView: View {
 
     // Function to hide the keyboard
     private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        isTextEditorFocused = false
+    }
+
+    // Clear the success message
+    private func clearSuccessMessage() {
+        jotUploaded = false
     }
 }
