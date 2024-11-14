@@ -12,6 +12,7 @@ struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
+    @State private var isResetting = false // New state to track reset phase
     @State private var jotUploaded = false // Track jot upload success
     @State private var transcribedText: String = "" // Store text locally for visibility
     @State private var isSending = false // Track send status
@@ -44,14 +45,16 @@ struct ContentView: View {
                 // Recording button
                 Button(action: {
                     hideKeyboard() // Hide keyboard when recording starts
-                    toggleRecording() // Toggle recording state
+                    if !isResetting {
+                        toggleRecording() // Toggle recording state
+                    }
                 }) {
-                    Text(isRecording ? "Stop" : (transcribedText.isEmpty ? "Record" : "Re-record"))
+                    Text(isResetting ? "Wait" : (isRecording ? "Stop" : (transcribedText.isEmpty ? "Record" : "Re-record")))
                         .font(.largeTitle)
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(isRecording ? Color.green : Color.red)
+                        .background(isResetting ? Color.gray : (isRecording ? Color.green : Color.red))
                         .cornerRadius(10)
                 }
                 .padding()
@@ -152,8 +155,12 @@ struct ContentView: View {
     // Stop recording if active
     private func stopRecordingIfActive() {
         if isRecording {
+            isResetting = true // Set "Wait" state during reset
             speechRecognizer.stopTranscribing()
-            isRecording = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Simulated reset delay
+                isRecording = false
+                isResetting = false
+            }
         }
     }
 
