@@ -12,7 +12,7 @@ struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
-    @State private var isResetting = false // New state to track reset phase
+    @State private var isResetting = false // Track reset state
     @State private var jotUploaded = false // Track jot upload success
     @State private var transcribedText: String = "" // Store text locally for visibility
     @State private var isSending = false // Track send status
@@ -45,7 +45,7 @@ struct ContentView: View {
                 // Recording button
                 Button(action: {
                     hideKeyboard() // Hide keyboard when recording starts
-                    if !isResetting {
+                    if !isResetting && !isSending {
                         toggleRecording() // Toggle recording state
                     }
                 }) {
@@ -54,10 +54,11 @@ struct ContentView: View {
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(isResetting ? Color.gray : (isRecording ? Color.green : Color.red))
+                        .background(isResetting || isSending ? Color.gray : (isRecording ? Color.green : Color.red))
                         .cornerRadius(10)
                 }
                 .padding()
+                .disabled(isSending || isResetting)
 
                 // Editable text field with send button and progress view
                 HStack {
