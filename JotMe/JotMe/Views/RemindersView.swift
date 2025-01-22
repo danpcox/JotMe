@@ -111,14 +111,12 @@ struct RemindersView: View {
             return false
         }
 
-        print("Checking date: \(dueDate)") // Debugging statement
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss" // Updated format to include time
         
         if let date = formatter.date(from: dueDate) {
             let isToday = Calendar.current.isDateInToday(date)
             let isPast = date < Date()
-            print("Date \(dueDate) -> isToday: \(isToday), isPast: \(isPast)")
             return isToday || isPast
         }
         print("Failed to parse date: \(dueDate)")
