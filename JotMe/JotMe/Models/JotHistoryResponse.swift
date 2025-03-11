@@ -6,9 +6,6 @@
 //
 
 
-// JotHistoryResponse.swift
-// JotMe
-
 import Foundation
 
 struct JotHistoryResponse: Codable {

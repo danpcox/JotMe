@@ -5,12 +5,12 @@
 //  Created by Dan Cox on 3/11/25.
 //
 
-
 import SwiftUI
 
 struct QandAView: View {
+    @EnvironmentObject var authManager: AuthManager
     @State private var question: String = ""
-    @State private var answer: String = "Your answer will appear here."
+    @State private var displayText: String = "Your answer will appear here."
     
     var body: some View {
         NavigationView {
@@ -26,14 +26,31 @@ struct QandAView: View {
                             .stroke(Color.gray, lineWidth: 1)
                     )
                 
-                Button("Submit") {
-                    // For now, just show a placeholder response.
-                    answer = "Fetching answer for: \(question)"
+                // Centered Submit button
+                HStack {
+                    Spacer()
+                    Button("Submit") {
+                        displayText = "Fetching answer..."
+                        let qaAPI = QandAAPI(authManager: authManager)
+                        qaAPI.askQuestion(question: question) { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let response):
+                                    // You now have access to response.qanda.question, response.qanda.answer, and response.qanda.createdAt
+                                    displayText = response.qanda.answer
+                                    // In the future, you could save response.qanda to show a history.
+                                case .failure(let error):
+                                    displayText = "Error: \(error.localizedDescription)"
+                                }
+                            }
+                        }
+                    }
+                    Spacer()
                 }
                 .padding()
                 
                 ScrollView {
-                    Text(answer)
+                    Text(displayText)
                         .padding()
                 }
                 
@@ -44,3 +61,4 @@ struct QandAView: View {
         }
     }
 }
+

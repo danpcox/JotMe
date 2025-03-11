@@ -132,6 +132,9 @@ class BaseAPI {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             // Handle network-level errors
             if let error = error {
+                if let data = data, let rawOutput = String(data: data, encoding: .utf8) {
+                    print("Raw API error response: \(rawOutput)")
+                }
                 completion(.failure(error))
                 return
             }
@@ -141,29 +144,31 @@ class BaseAPI {
                 completion(.failure(APIError.invalidResponse))
                 return
             }
-
+            
+            // Log raw output if status code is not in the success range
+            if !(200...299).contains(httpResponse.statusCode),
+               let data = data,
+               let rawOutput = String(data: data, encoding: .utf8) {
+                print("Raw API error response (status code \(httpResponse.statusCode)):\n\(rawOutput)")
+            }
+            
             // Handle specific HTTP status codes
             switch httpResponse.statusCode {
             case 200...299:
-                // Success range
                 if let data = data {
                     completion(.success(data))
                 } else {
                     completion(.failure(APIError.noData))
                 }
-
+                
             case 401:
-                // Unauthorized - attempt to refresh token
                 print("Token expired, attempting to refresh...")
-
                 self.refreshToken { success in
                     if success {
-                        // Retry the request with the refreshed token
                         guard let originalURL = request.url?.absoluteString else {
                             completion(.failure(APIError.invalidRequestURL))
                             return
                         }
-                        // Recreate the request with the original endpoint
                         guard let newRequest = self.createRequest(endpoint: originalURL, method: request.httpMethod ?? "GET") else {
                             completion(.failure(APIError.invalidRequest))
                             return
@@ -173,7 +178,7 @@ class BaseAPI {
                         completion(.failure(APIError.tokenRefreshFailed))
                     }
                 }
-
+                
             case 400:
                 completion(.failure(APIError.badRequest))
             case 403:
@@ -186,9 +191,9 @@ class BaseAPI {
                 completion(.failure(APIError.unhandledStatusCode(statusCode: httpResponse.statusCode)))
             }
         }
-
         task.resume()
     }
+
 
     // Function to refresh the Google token
     func refreshToken(completion: @escaping (Bool) -> Void) {
