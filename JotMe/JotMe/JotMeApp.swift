@@ -10,12 +10,16 @@ import SwiftUI
 @main
 struct JotMeApp: App {
     @StateObject private var authManager = AuthManager()
+    
     var body: some Scene {
         WindowGroup {
             if authManager.isAuthenticated {
-                ContentView(authManager: authManager).environmentObject(authManager)
+                // Instead of ContentView, use MainTabView for bottom navigation.
+                MainTabView(authManager: authManager)
+                    .environmentObject(authManager)
             } else {
-                LoginView().environmentObject(authManager)
+                LoginView()
+                    .environmentObject(authManager)
             }
         }
     }
